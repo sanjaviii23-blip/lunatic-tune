@@ -1,0 +1,41 @@
+name: Compilar LUNATIC TUNE
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compilar
+        run: cmake --build build --config Release --parallel
+
+      - name: Empaquetar
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp -R build/LunaticTune_artefacts/Release/* dist/ 2>/dev/null || cp -R build/LunaticTune_artefacts/* dist/
+          rm -rf dist/JuceLibraryCode
+          ls -R dist | head -50
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LUNATIC-TUNE-${{ matrix.name }}
+          path: dist
